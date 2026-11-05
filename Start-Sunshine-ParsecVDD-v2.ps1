@@ -52,7 +52,7 @@ if ([string]::IsNullOrWhiteSpace($SunshineExe)) {
     $SunshineExe = Join-Path -Path (Split-Path -Parent $scriptDirectory) -ChildPath 'Sunshine\sunshine.exe'
 }
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-$principal = New-Object Security.Principal.WindowsPrincipal($identity)
+$principal = [Security.Principal.WindowsPrincipal]::new($identity)
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     $powerShellExe = Join-Path -Path $env:SystemRoot -ChildPath 'System32\WindowsPowerShell\v1.0\powershell.exe'
     $arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $PSCommandPath + '" -StartupDelaySeconds ' + $StartupDelaySeconds
@@ -113,7 +113,7 @@ public static class PortableParsecVdd
     private static Thread pingThread;
     private static volatile bool keepRunning;
     private static int displayIndex = -1;
-    private static string pingError;
+    private static volatile string pingError;
 
     [StructLayout(LayoutKind.Sequential)]
     private struct SP_DEVICE_INTERFACE_DATA
