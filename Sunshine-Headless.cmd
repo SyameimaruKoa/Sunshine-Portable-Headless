@@ -7,7 +7,7 @@ set "BASE=%~dp0"
 set "PSBIN=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 set "CORE=%BASE%Start-Sunshine-ParsecVDD-v2.ps1"
 set "WRAPPER=%BASE%Launch-Sunshine-Headless.ps1"
-set "SUNSHINE=%BASE%sunshine.exe"
+set "SUNSHINE=%BASE%..\Sunshine\sunshine.exe"
 set "SHORTCUT=%BASE%Create-Sunshine-Shortcut.ps1"
 
 if /I "%~1"=="-h" goto :HELP
@@ -61,7 +61,7 @@ if not exist "%PSBIN%" (
 )
 if not exist "%SUNSHINE%" (
     echo [ERROR] sunshine.exe が見つからないのじゃ。
-    echo このCMDを sunshine.exe と同じフォルダーへ置くのじゃ。
+    echo Sunshine-Portable-Headless と同じ階層に Sunshine フォルダーを置くのじゃ。
     pause
     exit /b 2
 )
@@ -93,9 +93,11 @@ echo     Sunshine-Headless.cmd --shortcut   デスクトップにショートカット作成
 echo     Sunshine-Headless.cmd -h          ヘルプ表示
 echo     Sunshine-Headless.cmd --help      ヘルプ表示
 echo.
-echo 必要なもの: 同じフォルダーの sunshine.exe とPS1一式、
-echo             セットアップ済みの Parsec Virtual Display Adapter。
+echo 配置: Sunshine\sunshine.exe と Sunshine-Portable-Headless\本CMD一式を
+echo       同じ親フォルダーへ配置するのじゃ。
+echo       Parsec Virtual Display Adapter は事前にインストールすること。
 echo.
+echo 起動時に管理者権限のUAC確認が表示される。
 echo Sunshineをトレイメニューから通常終了すると仮想モニターも削除する。
 echo CMDは起動後すぐに閉じるので、バッチ終了の確認は表示されない。
 exit /b 0
