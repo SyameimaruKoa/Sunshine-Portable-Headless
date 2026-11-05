@@ -3,7 +3,7 @@
     Sunshine Headless起動ショートカットをデスクトップに作成する。
 .DESCRIPTION
     Windows標準のWScript.Shell COMインターフェースをPowerShellから呼ぶ。
-    VBSファイルは不要。ショートカットはポータブルSunshineと同じ場所の
+    VBSファイルは不要。ショートカットは本スクリプトと同じ場所の
     Launch-Sunshine-Headless.ps1を非表示で呼ぶ。
 .PARAMETER ShortcutPath
     作成先の .lnk ファイル。省略するとユーザーのデスクトップへ作成する。
@@ -16,7 +16,7 @@
 .EXAMPLE
     .\Create-Sunshine-Shortcut.ps1 -h
 .NOTES
-    Windows PowerShell 5.1。管理者権限・常駐サービスは不要。
+    Windows PowerShell 5.1。起動時にUACによる管理者権限の確認が必要。
 #>
 [CmdletBinding()]
 param(
@@ -33,7 +33,7 @@ if ($ShowHelp) {
 
 $ErrorActionPreference = 'Stop'
 $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
-$sunshineExe = Join-Path -Path $scriptDirectory -ChildPath 'sunshine.exe'
+$sunshineExe = Join-Path -Path (Split-Path -Parent $scriptDirectory) -ChildPath 'Sunshine\sunshine.exe'
 $launcherPs1 = Join-Path -Path $scriptDirectory -ChildPath 'Launch-Sunshine-Headless.ps1'
 $powerShellExe = Join-Path -Path $env:SystemRoot -ChildPath 'System32\WindowsPowerShell\v1.0\powershell.exe'
 if ([string]::IsNullOrWhiteSpace($ShortcutPath)) {
