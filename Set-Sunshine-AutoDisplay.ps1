@@ -5,7 +5,7 @@
     ポータブル版Sunshineの設定ファイル内で、表示関連の3項目のみを変更する。
     Windowsのディスプレイ拡大率は変更しない。
 .PARAMETER SunshineExe
-    ポータブル版sunshine.exeのパス。既定はこのスクリプトと同じフォルダー。
+    ポータブル版sunshine.exeのパス。既定は隣接するSunshineフォルダー。
 .PARAMETER ConfigPath
     Sunshineが実際に使用する設定ファイルを指定する場合のパス。
 .PARAMETER ShowHelp
@@ -32,7 +32,7 @@ if ($ShowHelp) {
 }
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($SunshineExe)) {
-    $SunshineExe = Join-Path -Path $PSScriptRoot -ChildPath 'sunshine.exe'
+    $SunshineExe = Join-Path -Path (Split-Path -Parent $PSScriptRoot) -ChildPath 'Sunshine\sunshine.exe'
 }
 if (-not (Test-Path -LiteralPath $SunshineExe -PathType Leaf)) {
     throw "sunshine.exe が見つからぬ: $SunshineExe"
