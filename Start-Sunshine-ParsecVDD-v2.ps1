@@ -7,7 +7,7 @@
     Sunshine が終了したら仮想ディスプレイを削除し、補助プロセスを残さない。
     Sunshine の既存設定やサービス、電源プラン等は変更しない。
 .PARAMETER SunshineExe
-    実行する sunshine.exe。既定は隣接する Sunshine フォルダー内の sunshine.exe。
+    実行する sunshine.exe。既定はランチャーの親フォルダーにある sunshine.exe。
 .PARAMETER ConfigPath
     既存の sunshine.conf を明示的に指定する場合に使用する。
     省略した場合は Sunshine 本来の設定場所を使用する。
@@ -49,7 +49,7 @@ if ([string]::IsNullOrWhiteSpace($SunshineExe)) {
     if ([string]::IsNullOrWhiteSpace($scriptDirectory)) {
         throw 'スクリプトの保存先フォルダーを取得できぬ。-File で実行するのじゃ。'
     }
-    $SunshineExe = Join-Path -Path (Split-Path -Parent $scriptDirectory) -ChildPath 'Sunshine\sunshine.exe'
+    $SunshineExe = Join-Path -Path (Split-Path -Parent $scriptDirectory) -ChildPath 'sunshine.exe'
 }
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = [Security.Principal.WindowsPrincipal]::new($identity)

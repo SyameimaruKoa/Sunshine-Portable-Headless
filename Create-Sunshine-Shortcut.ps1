@@ -33,7 +33,7 @@ if ($ShowHelp) {
 
 $ErrorActionPreference = 'Stop'
 $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
-$sunshineExe = Join-Path -Path (Split-Path -Parent $scriptDirectory) -ChildPath 'Sunshine\sunshine.exe'
+$sunshineExe = Join-Path -Path (Split-Path -Parent $scriptDirectory) -ChildPath 'sunshine.exe'
 $launcherPs1 = Join-Path -Path $scriptDirectory -ChildPath 'Launch-Sunshine-Headless.ps1'
 $powerShellExe = Join-Path -Path $env:SystemRoot -ChildPath 'System32\WindowsPowerShell\v1.0\powershell.exe'
 if ([string]::IsNullOrWhiteSpace($ShortcutPath)) {

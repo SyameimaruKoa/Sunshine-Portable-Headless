@@ -24,14 +24,13 @@
 
 ## インストール
 
-本リポジトリを `Sunshine` フォルダーと同じ階層に置く。**Sunshine本体とランチャーは別フォルダー**でよい。
+本リポジトリを `Sunshine` フォルダーの中に配置する。`sunshine.exe` は親フォルダー側に置く。
 
 ```text
-親フォルダー/
-    Sunshine/
-        sunshine.exe                       (別途用意)
-        config/
-            sunshine.conf
+Sunshine/
+    sunshine.exe                           (別途用意)
+    config/
+        sunshine.conf
     Sunshine-Portable-Headless/
         Sunshine-Headless.cmd
         Launch-Sunshine-Headless.ps1
@@ -42,7 +41,7 @@
         HeadlessSettings.json
 ```
 
-パスはランチャーの場所から `..\Sunshine\sunshine.exe` として解決する。設定ファイルはSunshine本体側の `config\sunshine.conf` に作成・更新される。
+パスはランチャーの場所から `..\sunshine.exe` として解決する。設定ファイルはSunshine本体側の `config\sunshine.conf` に作成・更新される。
 
 **`apps.json`、MPO、Game DVR、電源プランには触れない。** `sunshine.conf` では表示関連の3項目のみ自動追従用に設定する。 `sunshine-vdd` のサービス用インストーラーとは別実装。
 
