@@ -6,7 +6,7 @@
 
 ## 動作
 
-1. ランチャーがPowerShellを独立プロセスとして起動し、CMDはすぐ終了する。
+1. ランチャーが表示状態のPowerShellを独立プロセスとして起動し、CMDはすぐ終了する。
 2. ランチャーを管理者権限に昇格し、Parsec VDDを起動する。ドライバー制御で画面を追加し、Windowsが仮想画面を認識したことを確認する（失敗時は最大3回再試行）。
 3. 管理者権限でポータブル版 `sunshine.exe` を起動する。Sunshine稼働中も仮想画面と維持信号を監視し、切断時には再生成を試みる。
 4. Sunshineを正常終了すると、仮想モニターを削除する。PowerShellも終了する。
@@ -47,11 +47,11 @@ Sunshine/
 
 ### ワンクリック起動
 
-**`Sunshine-Headless.cmd` をダブルクリック**する。UACが表示されるので許可する。CMDは即終了し、SunshineとParsec仮想モニターは利用中だけ稼働する。
+**`Sunshine-Headless.cmd` をダブルクリック**する。UACが表示されるので許可する。CMDは即終了し、管理者権限のPowerShellコンソールはSunshine稼働中ずっと表示される。
 
 ### デスクトップショートカット（任意）
 
-一度だけ `Sunshine-Headless.cmd --shortcut` を実行する。作られた「Sunshine Headless」のショートカットは**PowerShellに直接リンクする**ため、起動時にCMDやVBSを経由しない。管理者権限への昇格はPowerShellランチャーが行う。
+一度だけ `Sunshine-Headless.cmd --shortcut` を実行する。作られた「Sunshine Headless」のショートカットは**PowerShellに直接リンクする**ため、起動時にCMDやVBSを経由しない。管理者権限へ昇格し、コンソールを表示する。**変更前に作成したショートカットは再作成すること。**
 
 > インストール先を移動した場合は、ショートカットを作り直すこと。
 
@@ -73,7 +73,7 @@ Sunshine-Headless.cmd --help
 
 `--debug` は独立したPowerShellウィンドウで起動し、エラーを表示する。必要なら管理者権限のPowerShellを追加起動する。バッチ自体は待機しない。PS1単体にも `-h` があり、コメントベースの `Get-Help` に対応する。
 
-通常起動時のログは `Sunshine-Headless.log`。コンソール非表示で失敗したらまずログを確認する。
+通常起動でも管理者権限のPowerShellコンソールが表示される。ログは `Sunshine-Headless.log` にも保存される。
 
 ## Sunshineの画面設定
 

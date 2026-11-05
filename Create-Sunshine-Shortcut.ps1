@@ -4,7 +4,7 @@
 .DESCRIPTION
     Windows標準のWScript.Shell COMインターフェースをPowerShellから呼ぶ。
     VBSファイルは不要。ショートカットは本スクリプトと同じ場所の
-    Launch-Sunshine-Headless.ps1を非表示で呼ぶ。
+    Launch-Sunshine-Headless.ps1をコンソール表示で呼ぶ。
 .PARAMETER ShortcutPath
     作成先の .lnk ファイル。省略するとユーザーのデスクトップへ作成する。
 .PARAMETER ShowHelp
@@ -51,7 +51,7 @@ foreach ($path in @($sunshineExe, $launcherPs1, $powerShellExe)) {
 $shell = New-Object -ComObject WScript.Shell
 $link = $shell.CreateShortcut([IO.Path]::GetFullPath($ShortcutPath))
 $link.TargetPath = $powerShellExe
-$link.Arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $launcherPs1 + '"'
+$link.Arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $launcherPs1 + '"'
 $link.WorkingDirectory = $scriptDirectory
 $link.IconLocation = $sunshineExe + ',0'
 $link.Description = 'Sunshine + Parsec VDD（必要なときだけ起動）'

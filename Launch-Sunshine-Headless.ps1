@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    コンソールを非表示にしてSunshine + Parsec VDDを起動し、ログを残す。
+    コンソールを表示したままSunshine + Parsec VDDを起動し、ログを残す。
 .DESCRIPTION
     同じフォルダーの既存 Start-Sunshine-ParsecVDD-v2.ps1 を管理者権限で呼び出す。
     SunshineとVDDの制御ロジックは変更しない。スクリプト自体は
@@ -43,7 +43,7 @@ try {
     $principal = [Security.Principal.WindowsPrincipal]::new($identity)
     if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
         $powerShellExe = Join-Path -Path $env:SystemRoot -ChildPath 'System32\WindowsPowerShell\v1.0\powershell.exe'
-        $arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $PSCommandPath + '"'
+        $arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $PSCommandPath + '"'
         Start-Process -FilePath $powerShellExe -ArgumentList $arguments -Verb RunAs -ErrorAction Stop | Out-Null
         return
     }

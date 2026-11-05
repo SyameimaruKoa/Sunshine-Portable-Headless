@@ -20,7 +20,7 @@ call :CHECK
 if errorlevel 1 exit /b 2
 
 rem START detaches PowerShell; CMD returns immediately, so no batch Ctrl+C prompt.
-start "" /D "%BASE%" "%PSBIN%" -NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%WRAPPER%"
+start "" /D "%BASE%" "%PSBIN%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%WRAPPER%"
 if errorlevel 1 (
     echo [ERROR] PowerShell を起動できなかったのじゃ。
     pause
