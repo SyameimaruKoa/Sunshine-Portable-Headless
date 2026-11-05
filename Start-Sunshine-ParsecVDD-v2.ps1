@@ -326,6 +326,8 @@ public static class PortableParsecVdd
         device = OpenDevice();
         try
         {
+            // ParsecDisplayの接続順序と同じく、ADD前にUPDATEでセッションを初期化する。
+            Ioctl(IOCTL_UPDATE, null);
             uint index = Ioctl(IOCTL_ADD, null);
             if (index > 15)
             {
