@@ -3,8 +3,8 @@
     Sunshine Headless起動ショートカットをデスクトップに作成する。
 .DESCRIPTION
     Windows標準のWScript.Shell COMインターフェースをPowerShellから呼ぶ。
-    VBSファイルは不要。ショートカットはポータブルSunshineと同じ場所の
-    Launch-Sunshine-Headless.ps1を非表示で呼ぶ。
+    VBSファイルは不要。ショートカットは本スクリプトと同じ場所の
+    Launch-Sunshine-Headless.ps1をコンソール表示で呼ぶ。
 .PARAMETER ShortcutPath
     作成先の .lnk ファイル。省略するとユーザーのデスクトップへ作成する。
 .PARAMETER ShowHelp
@@ -16,7 +16,7 @@
 .EXAMPLE
     .\Create-Sunshine-Shortcut.ps1 -h
 .NOTES
-    Windows PowerShell 5.1。管理者権限・常駐サービスは不要。
+    Windows PowerShell 5.1。起動時にUACによる管理者権限の確認が必要。
 #>
 [CmdletBinding()]
 param(
@@ -33,7 +33,7 @@ if ($ShowHelp) {
 
 $ErrorActionPreference = 'Stop'
 $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
-$sunshineExe = Join-Path -Path $scriptDirectory -ChildPath 'sunshine.exe'
+$sunshineExe = Join-Path -Path (Split-Path -Parent $scriptDirectory) -ChildPath 'sunshine.exe'
 $launcherPs1 = Join-Path -Path $scriptDirectory -ChildPath 'Launch-Sunshine-Headless.ps1'
 $powerShellExe = Join-Path -Path $env:SystemRoot -ChildPath 'System32\WindowsPowerShell\v1.0\powershell.exe'
 if ([string]::IsNullOrWhiteSpace($ShortcutPath)) {
@@ -51,7 +51,7 @@ foreach ($path in @($sunshineExe, $launcherPs1, $powerShellExe)) {
 $shell = New-Object -ComObject WScript.Shell
 $link = $shell.CreateShortcut([IO.Path]::GetFullPath($ShortcutPath))
 $link.TargetPath = $powerShellExe
-$link.Arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $launcherPs1 + '"'
+$link.Arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $launcherPs1 + '"'
 $link.WorkingDirectory = $scriptDirectory
 $link.IconLocation = $sunshineExe + ',0'
 $link.Description = 'Sunshine + Parsec VDD（必要なときだけ起動）'

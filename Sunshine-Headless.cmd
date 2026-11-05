@@ -7,7 +7,7 @@ set "BASE=%~dp0"
 set "PSBIN=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 set "CORE=%BASE%Start-Sunshine-ParsecVDD-v2.ps1"
 set "WRAPPER=%BASE%Launch-Sunshine-Headless.ps1"
-set "SUNSHINE=%BASE%sunshine.exe"
+set "SUNSHINE=%BASE%..\sunshine.exe"
 set "SHORTCUT=%BASE%Create-Sunshine-Shortcut.ps1"
 
 if /I "%~1"=="-h" goto :HELP
@@ -20,9 +20,9 @@ call :CHECK
 if errorlevel 1 exit /b 2
 
 rem START detaches PowerShell; CMD returns immediately, so no batch Ctrl+C prompt.
-start "" /D "%BASE%" "%PSBIN%" -NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%WRAPPER%"
+start "" /D "%BASE%" "%PSBIN%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%WRAPPER%"
 if errorlevel 1 (
-    echo [ERROR] PowerShell ‚ğ‹N“®‚Å‚«‚È‚©‚Á‚½‚Ì‚¶‚áB
+    echo [ERROR] PowerShell ã‚’èµ·å‹•ã§ããªã‹ã£ãŸã®ã˜ã‚ƒã€‚
     pause
     exit /b 1
 )
@@ -34,7 +34,7 @@ if errorlevel 1 exit /b 2
 rem A separate PowerShell console for troubleshooting; CMD still exits immediately.
 start "" /D "%BASE%" "%PSBIN%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%CORE%"
 if errorlevel 1 (
-    echo [ERROR] PowerShell ‚ğ‹N“®‚Å‚«‚È‚©‚Á‚½‚Ì‚¶‚áB
+    echo [ERROR] PowerShell ã‚’èµ·å‹•ã§ããªã‹ã£ãŸã®ã˜ã‚ƒã€‚
     pause
     exit /b 1
 )
@@ -44,7 +44,7 @@ exit /b 0
 call :CHECK
 if errorlevel 1 exit /b 2
 if not exist "%SHORTCUT%" (
-    echo [ERROR] Create-Sunshine-Shortcut.ps1 ‚ªŒ©‚Â‚©‚ç‚È‚¢‚Ì‚¶‚áB
+    echo [ERROR] Create-Sunshine-Shortcut.ps1 ãŒè¦‹ã¤ã‹ã‚‰ãªã„ã®ã˜ã‚ƒã€‚
     pause
     exit /b 2
 )
@@ -55,51 +55,53 @@ exit /b %RESULT%
 
 :CHECK
 if not exist "%PSBIN%" (
-    echo [ERROR] Windows PowerShell ‚ªŒ©‚Â‚©‚ç‚È‚¢‚Ì‚¶‚áB
+    echo [ERROR] Windows PowerShell ãŒè¦‹ã¤ã‹ã‚‰ãªã„ã®ã˜ã‚ƒã€‚
     pause
     exit /b 2
 )
 if not exist "%SUNSHINE%" (
-    echo [ERROR] sunshine.exe ‚ªŒ©‚Â‚©‚ç‚È‚¢‚Ì‚¶‚áB
-    echo ‚±‚ÌCMD‚ğ sunshine.exe ‚Æ“¯‚¶ƒtƒHƒ‹ƒ_[‚Ö’u‚­‚Ì‚¶‚áB
+    echo [ERROR] sunshine.exe ãŒè¦‹ã¤ã‹ã‚‰ãªã„ã®ã˜ã‚ƒã€‚
+    echo Sunshine-Portable-Headless ã¨åŒã˜éšå±¤ã« Sunshine ãƒ•ã‚©ãƒ«ãƒ€ãƒ¼ã‚’ç½®ãã®ã˜ã‚ƒã€‚
     pause
     exit /b 2
 )
 if not exist "%CORE%" (
-    echo [ERROR] Start-Sunshine-ParsecVDD-v2.ps1 ‚ªŒ©‚Â‚©‚ç‚È‚¢‚Ì‚¶‚áB
+    echo [ERROR] Start-Sunshine-ParsecVDD-v2.ps1 ãŒè¦‹ã¤ã‹ã‚‰ãªã„ã®ã˜ã‚ƒã€‚
     pause
     exit /b 2
 )
 if not exist "%WRAPPER%" (
-    echo [ERROR] Launch-Sunshine-Headless.ps1 ‚ªŒ©‚Â‚©‚ç‚È‚¢‚Ì‚¶‚áB
+    echo [ERROR] Launch-Sunshine-Headless.ps1 ãŒè¦‹ã¤ã‹ã‚‰ãªã„ã®ã˜ã‚ƒã€‚
     pause
     exit /b 2
 )
 exit /b 0
 
 :INVALID
-echo [ERROR] –¢‘Î‰‚Ìˆø”: %~1
+echo [ERROR] æœªå¯¾å¿œã®å¼•æ•°: %~1
 echo.
 goto :HELP_ERROR
 
 :HELP
 echo.
-echo Sunshine + Parsec VDD ƒ|[ƒ^ƒuƒ‹‹N“®
+echo Sunshine + Parsec VDD ãƒãƒ¼ã‚¿ãƒ–ãƒ«èµ·å‹•
 echo.
-echo g—p•û–@:
-echo     Sunshine-Headless.cmd              ’Êí‹N“®iƒEƒBƒ“ƒhƒE”ñ•\¦j
-echo     Sunshine-Headless.cmd --debug      •Ê‚ÌPowerShell‰æ–Ê‚Å‹N“®
-echo     Sunshine-Headless.cmd --shortcut   ƒfƒXƒNƒgƒbƒv‚ÉƒVƒ‡[ƒgƒJƒbƒgì¬
-echo     Sunshine-Headless.cmd -h          ƒwƒ‹ƒv•\¦
-echo     Sunshine-Headless.cmd --help      ƒwƒ‹ƒv•\¦
+echo ä½¿ç”¨æ–¹æ³•:
+echo     Sunshine-Headless.cmd              é€šå¸¸èµ·å‹•ï¼ˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦éè¡¨ç¤ºï¼‰
+echo     Sunshine-Headless.cmd --debug      åˆ¥ã®PowerShellç”»é¢ã§èµ·å‹•
+echo     Sunshine-Headless.cmd --shortcut   ãƒ‡ã‚¹ã‚¯ãƒˆãƒƒãƒ—ã«ã‚·ãƒ§ãƒ¼ãƒˆã‚«ãƒƒãƒˆä½œæˆ
+echo     Sunshine-Headless.cmd -h          ãƒ˜ãƒ«ãƒ—è¡¨ç¤º
+echo     Sunshine-Headless.cmd --help      ãƒ˜ãƒ«ãƒ—è¡¨ç¤º
 echo.
-echo •K—v‚È‚à‚Ì: “¯‚¶ƒtƒHƒ‹ƒ_[‚Ì sunshine.exe ‚ÆPS1ˆê®A
-echo             ƒZƒbƒgƒAƒbƒvÏ‚İ‚Ì Parsec Virtual Display AdapterB
+echo é…ç½®: Sunshine\sunshine.exe ã¨ Sunshine-Portable-Headless\æœ¬CMDä¸€å¼ã‚’
+echo       åŒã˜è¦ªãƒ•ã‚©ãƒ«ãƒ€ãƒ¼ã¸é…ç½®ã™ã‚‹ã®ã˜ã‚ƒã€‚
+echo       Parsec Virtual Display Adapter ã¯äº‹å‰ã«ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã™ã‚‹ã“ã¨ã€‚
 echo.
-echo Sunshine‚ğƒgƒŒƒCƒƒjƒ…[‚©‚ç’ÊíI—¹‚·‚é‚Æ‰¼‘zƒ‚ƒjƒ^[‚àíœ‚·‚éB
-echo CMD‚Í‹N“®Œã‚·‚®‚É•Â‚¶‚é‚Ì‚ÅAƒoƒbƒ`I—¹‚ÌŠm”F‚Í•\¦‚³‚ê‚È‚¢B
+echo èµ·å‹•æ™‚ã«ç®¡ç†è€…æ¨©é™ã®UACç¢ºèªãŒè¡¨ç¤ºã•ã‚Œã‚‹ã€‚
+echo Sunshineã‚’ãƒˆãƒ¬ã‚¤ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‹ã‚‰é€šå¸¸çµ‚äº†ã™ã‚‹ã¨ä»®æƒ³ãƒ¢ãƒ‹ã‚¿ãƒ¼ã‚‚å‰Šé™¤ã™ã‚‹ã€‚
+echo CMDã¯èµ·å‹•å¾Œã™ãã«é–‰ã˜ã‚‹ã®ã§ã€ãƒãƒƒãƒçµ‚äº†ã®ç¢ºèªã¯è¡¨ç¤ºã•ã‚Œãªã„ã€‚
 exit /b 0
 
 :HELP_ERROR
-echo ƒwƒ‹ƒv‚ğ•\¦‚·‚é‚É‚Í -h ‚Ü‚½‚Í --help ‚ğw’è‚·‚é‚Ì‚¶‚áB
+echo ãƒ˜ãƒ«ãƒ—ã‚’è¡¨ç¤ºã™ã‚‹ã«ã¯ -h ã¾ãŸã¯ --help ã‚’æŒ‡å®šã™ã‚‹ã®ã˜ã‚ƒã€‚
 exit /b 2
