@@ -81,7 +81,10 @@ if (Get-Process -Name 'sunshine' -ErrorAction SilentlyContinue) {
 }
 
 $adapter = Get-PnpDevice -Class Display -ErrorAction Stop |
-    Where-Object { $_.FriendlyName -eq 'Parsec Virtual Display Adapter' -and $_.Status -eq 'OK' }
+    Where-Object {
+        ($_.FriendlyName -eq 'Parsec Virtual Display Adapter' -or $_.InstanceId -like 'ROOT\PARSEC\VDA*') -and
+        $_.Status -eq 'OK'
+    }
 if (-not $adapter) {
     throw '正常な Parsec Virtual Display Adapter が見つからぬ。'
 }
@@ -431,6 +434,9 @@ function Start-VerifiedVdd {
             if ($script:vddStarted) {
                 try {
                     [PortableParsecVdd]::Stop()
+                }
+                catch {
+                    Write-Warning "VDDの後処理に失敗: $_"
                 }
                 finally {
                     $script:vddStarted = $false
