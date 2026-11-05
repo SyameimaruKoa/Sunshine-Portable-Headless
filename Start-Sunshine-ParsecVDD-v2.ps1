@@ -7,7 +7,7 @@
     Sunshine が終了したら仮想ディスプレイを削除し、補助プロセスを残さない。
     Sunshine の既存設定やサービス、電源プラン等は変更しない。
 .PARAMETER SunshineExe
-    実行する sunshine.exe。既定は本スクリプトと同じフォルダー内の sunshine.exe。
+    実行する sunshine.exe。既定は隣接する Sunshine フォルダー内の sunshine.exe。
 .PARAMETER ConfigPath
     既存の sunshine.conf を明示的に指定する場合に使用する。
     省略した場合は Sunshine 本来の設定場所を使用する。
@@ -49,7 +49,22 @@ if ([string]::IsNullOrWhiteSpace($SunshineExe)) {
     if ([string]::IsNullOrWhiteSpace($scriptDirectory)) {
         throw 'スクリプトの保存先フォルダーを取得できぬ。-File で実行するのじゃ。'
     }
-    $SunshineExe = Join-Path -Path $scriptDirectory -ChildPath 'sunshine.exe'
+    $SunshineExe = Join-Path -Path (Split-Path -Parent $scriptDirectory) -ChildPath 'Sunshine\sunshine.exe'
+}
+$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$principal = New-Object Security.Principal.WindowsPrincipal($identity)
+if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    $powerShellExe = Join-Path -Path $env:SystemRoot -ChildPath 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    $arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $PSCommandPath + '" -StartupDelaySeconds ' + $StartupDelaySeconds
+    if (-not [string]::IsNullOrWhiteSpace($SunshineExe)) {
+        $arguments += ' -SunshineExe "' + $SunshineExe + '"'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($ConfigPath)) {
+        $arguments += ' -ConfigPath "' + $ConfigPath + '"'
+    }
+    Write-Host 'SunshineとVDDを管理者権限で起動し直すのじゃ。'
+    $elevated = Start-Process -FilePath $powerShellExe -ArgumentList $arguments -Verb RunAs -Wait -PassThru
+    exit $elevated.ExitCode
 }
 if (-not [Environment]::Is64BitProcess) {
     throw '64ビットの Windows PowerShell で実行する必要があるのじゃ。'
@@ -138,10 +153,53 @@ public static class PortableParsecVdd
     private static extern bool GetOverlappedResultEx(IntPtr handle, IntPtr overlapped,
         out uint transferred, uint milliseconds, bool alertable);
     [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool CancelIoEx(IntPtr handle, IntPtr overlapped);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetOverlappedResult(IntPtr handle, IntPtr overlapped,
+        out uint transferred, bool wait);
+    [DllImport("kernel32.dll", SetLastError = true)]
     private static extern IntPtr CreateEvent(IntPtr attributes, bool manualReset,
         bool initialState, string name);
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool CloseHandle(IntPtr handle);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct DisplayDevice
+    {
+        public int cb;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string DeviceName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceString;
+        public int StateFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceID;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceKey;
+    }
+    [DllImport("user32.dll", EntryPoint = "EnumDisplayDevicesW", CharSet = CharSet.Unicode)]
+    private static extern bool EnumDisplayDevices(string deviceName, uint index,
+        ref DisplayDevice device, uint flags);
+
+    public static bool IsDisplayActive()
+    {
+        for (uint i = 0; i < 64; i++)
+        {
+            DisplayDevice adapter = new DisplayDevice();
+            adapter.cb = Marshal.SizeOf(typeof(DisplayDevice));
+            if (!EnumDisplayDevices(null, i, ref adapter, 0))
+                break;
+            for (uint j = 0; j < 32; j++)
+            {
+                DisplayDevice monitor = new DisplayDevice();
+                monitor.cb = Marshal.SizeOf(typeof(DisplayDevice));
+                if (!EnumDisplayDevices(adapter.DeviceName, j, ref monitor, 1))
+                    break;
+                bool isParsec = (!String.IsNullOrEmpty(monitor.DeviceID) &&
+                    monitor.DeviceID.IndexOf("PSCCDD0", StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    String.Equals(monitor.DeviceString, "ParsecVDA", StringComparison.OrdinalIgnoreCase);
+                if (isParsec && (monitor.StateFlags & 1) != 0 && (adapter.StateFlags & 1) != 0)
+                    return true;
+            }
+        }
+        return false;
+    }
 
     private static IntPtr OpenDevice()
     {
@@ -224,16 +282,19 @@ public static class PortableParsecVdd
                 overlapped.EventHandle = evt;
                 ovPtr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NativeOverlapped)));
                 Marshal.StructureToPtr(overlapped, ovPtr, false);
-                bool ok = DeviceIoControl(device, code, input, 32,
+                // ParsecDisplayと同じく、同期戻り値ではなくOVERLAPPEDの完了結果を確認する。
+                DeviceIoControl(device, code, input, 32,
                     output, 4, IntPtr.Zero, ovPtr);
-                if (!ok && Marshal.GetLastWin32Error() != ERROR_IO_PENDING)
-                {
-                    throw new Win32Exception(Marshal.GetLastWin32Error(), "VDD IOCTL失敗");
-                }
                 uint transferred;
-                if (!GetOverlappedResultEx(device, ovPtr, out transferred, 5000, false))
+                uint timeout = code == IOCTL_ADD ? 5000u : 1000u;
+                if (!GetOverlappedResultEx(device, ovPtr, out transferred, timeout, false))
                 {
-                    throw new Win32Exception(Marshal.GetLastWin32Error(), "VDD IOCTL応答待ちに失敗");
+                    int error = Marshal.GetLastWin32Error();
+                    // 未完了のI/Oが解放済みメモリへ書き込まないよう完了まで待つ。
+                    CancelIoEx(device, ovPtr);
+                    uint cancelledBytes;
+                    GetOverlappedResult(device, ovPtr, out cancelledBytes, true);
+                    throw new Win32Exception(error, "VDD IOCTL応答待ちに失敗");
                 }
                 return unchecked((uint)Marshal.ReadInt32(output));
             }
@@ -312,7 +373,8 @@ public static class PortableParsecVdd
         keepRunning = false;
         if (pingThread != null)
         {
-            pingThread.Join(5000);
+            if (!pingThread.Join(12000))
+                throw new InvalidOperationException("VDD維持スレッドが終了しないためデバイスを閉じられない");
             pingThread = null;
         }
         if (device != IntPtr.Zero)
@@ -321,7 +383,8 @@ public static class PortableParsecVdd
             {
                 if (displayIndex >= 0)
                 {
-                    byte[] indexBytes = BitConverter.GetBytes((ushort)displayIndex);
+                    byte[] indexBytes = new byte[2];
+                    indexBytes[1] = (byte)displayIndex;
                     Ioctl(IOCTL_REMOVE, indexBytes);
                     Ioctl(IOCTL_UPDATE, null);
                 }
@@ -340,11 +403,49 @@ public static class PortableParsecVdd
 
 #region SunshineLifecycle
 $vddStarted = $false
+function Start-VerifiedVdd {
+    param([ValidateRange(1, 10)][int]$Attempts = 3)
+    for ($attempt = 1; $attempt -le $Attempts; $attempt++) {
+        try {
+            $index = [PortableParsecVdd]::Start()
+            $script:vddStarted = $true
+            $ready = $false
+            for ($probe = 0; $probe -lt 20; $probe++) {
+                if ([PortableParsecVdd]::GetPingError()) {
+                    throw "VDD維持信号に失敗: $([PortableParsecVdd]::GetPingError())"
+                }
+                if ([PortableParsecVdd]::IsDisplayActive()) {
+                    $ready = $true
+                    break
+                }
+                Start-Sleep -Milliseconds 500
+            }
+            if (-not $ready) {
+                throw '仮想モニターが10秒以内にWindowsのアクティブな画面として認識されなかった'
+            }
+            Write-Host "Parsec仮想ディスプレイの認識を確認したぞ。Index=$index"
+            return
+        }
+        catch {
+            Write-Warning "Parsec VDDの初期化に失敗 ($attempt/$Attempts): $_"
+            if ($script:vddStarted) {
+                try {
+                    [PortableParsecVdd]::Stop()
+                }
+                finally {
+                    $script:vddStarted = $false
+                }
+            }
+            if ($attempt -eq $Attempts) {
+                throw
+            }
+            Start-Sleep -Seconds 2
+        }
+    }
+}
 try {
     Add-Type -TypeDefinition $interopSource -Language CSharp -ReferencedAssemblies @('System.dll')
-    $index = [PortableParsecVdd]::Start()
-    $vddStarted = $true
-    Write-Host "Parsec仮想ディスプレイを生成したぞ。Index=$index"
+    Start-VerifiedVdd
     $displaySettingsScript = Join-Path -Path (Split-Path -Parent $MyInvocation.MyCommand.Path) -ChildPath 'Set-Sunshine-AutoDisplay.ps1'
     if (-not (Test-Path -LiteralPath $displaySettingsScript -PathType Leaf)) {
         throw "Sunshineの画面設定スクリプトが見つからぬ: $displaySettingsScript"
@@ -404,10 +505,37 @@ try {
     Write-Host "Sunshineを起動するのじゃ: $SunshineExe"
     $sunshine = Start-Process @launchOptions
     try {
-        if ($dpiMode -eq '100') {
-            # Sunshine changes the display mode when Moonlight connects.
-            # Reuse this PowerShell process; no additional service is needed.
-            while (-not $sunshine.WaitForExit(3000)) {
+        # Sunshine稼働中もVDDの監視を継続する。DPI設定がkeepでも復旧する。
+        $missingChecks = 0
+        while (-not $sunshine.WaitForExit(3000)) {
+            $pingError = [PortableParsecVdd]::GetPingError()
+            if ([PortableParsecVdd]::IsDisplayActive()) {
+                $missingChecks = 0
+            }
+            else {
+                $missingChecks++
+            }
+            if ($pingError -or $missingChecks -ge 2) {
+                Write-Warning "Parsec VDDの切断を検知。PingError=$pingError MissingChecks=$missingChecks"
+                if ($vddStarted) {
+                    try {
+                        [PortableParsecVdd]::Stop()
+                    }
+                    catch {
+                        Write-Warning "VDD終了処理に失敗: $_"
+                    }
+                    $vddStarted = $false
+                }
+                try {
+                    Start-VerifiedVdd
+                    Write-Warning 'Parsec仮想ディスプレイを再生成した。Sunshineの画面再認識が必要な場合は再接続するのじゃ。'
+                }
+                catch {
+                    Write-Warning "Parsec仮想ディスプレイの再生成に失敗: $_"
+                }
+                $missingChecks = 0
+            }
+            if ($dpiMode -eq '100') {
                 try {
                     $dpiResult = [string](& $dpiScript -Mode '100')
                     if ($dpiResult -eq 'changed-to-100') {
@@ -427,9 +555,6 @@ try {
                 }
             }
         }
-        else {
-            $sunshine.WaitForExit()
-        }
         $sunshine.Refresh()
         Write-Host "Sunshine終了コード: $($sunshine.ExitCode)"
         if ([PortableParsecVdd]::GetPingError()) {
@@ -443,7 +568,12 @@ try {
 finally {
     if ($vddStarted) {
         Write-Host 'Parsec仮想ディスプレイを削除するのじゃ。'
-        [PortableParsecVdd]::Stop()
+        try {
+            [PortableParsecVdd]::Stop()
+        }
+        catch {
+            Write-Warning "VDD終了時の後処理に失敗: $_"
+        }
     }
 }
 #endregion SunshineLifecycle
