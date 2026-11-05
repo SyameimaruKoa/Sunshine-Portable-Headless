@@ -2,7 +2,7 @@
 .SYNOPSIS
     コンソールを非表示にしてSunshine + Parsec VDDを起動し、ログを残す。
 .DESCRIPTION
-    同じフォルダーの既存 Start-Sunshine-ParsecVDD-v2.ps1 を呼び出す。
+    同じフォルダーの既存 Start-Sunshine-ParsecVDD-v2.ps1 を管理者権限で呼び出す。
     SunshineとVDDの制御ロジックは変更しない。スクリプト自体は
     Sunshine終了まで待機し、終了後は通常どおり自動終了する。
 .PARAMETER ShowHelp
@@ -37,6 +37,15 @@ $transcriptStarted = $false
 try {
     if (-not (Test-Path -LiteralPath $controllerPath -PathType Leaf)) {
         throw "制御スクリプトが見つからぬ: $controllerPath"
+    }
+
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($identity)
+    if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        $powerShellExe = Join-Path -Path $env:SystemRoot -ChildPath 'System32\WindowsPowerShell\v1.0\powershell.exe'
+        $arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $PSCommandPath + '"'
+        Start-Process -FilePath $powerShellExe -ArgumentList $arguments -Verb RunAs -ErrorAction Stop | Out-Null
+        return
     }
 
     Start-Transcript -LiteralPath $logPath -Append -ErrorAction Stop | Out-Null
